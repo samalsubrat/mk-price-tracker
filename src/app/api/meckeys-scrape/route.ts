@@ -6,6 +6,8 @@ interface Product {
   link: string;
   price: string;
   category: string;
+  image: string;
+  stock: string;
 }
 
 const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
@@ -27,33 +29,41 @@ async function scrapeCategory(page: puppeteer.Page, url: string, categoryLabel: 
 
   const products = await page.evaluate((categoryLabel) => {
     const elements = document.querySelectorAll('.type-product');
+
     return Array.from(elements).map((el) => {
       const name = el.querySelector('h2')?.textContent?.trim() || 'No name';
       const link = el.querySelector('a')?.href || 'No link';
       const price = el.querySelector('.woocommerce-Price-amount')?.textContent?.trim() || 'No price';
+
+      // Get image from .img-wrap > img
+      let image = 'No image';
+      const imgEl = el.querySelector('.img-wrap img');
+      if (imgEl) {
+        image = imgEl.getAttribute('src') || imgEl.getAttribute('data-src') || 'No image';
+        if (image.startsWith('//')) image = 'https:' + image;
+      }
+
       const classList = Array.from(el.classList);
       const stock = classList.includes('instock') ? 'instock' : 'outofstock';
 
-      // For keyboard, try to get category from classes; else use passed label
+      // Handle Keyboard category
       if (categoryLabel === 'Keyboard') {
-        const classList = Array.from(el.classList);
         const catClass = classList.find((cls) => cls.startsWith('product_cat-'));
         const categoryMatch = catClass?.match(/product_cat-(\d+)-keyboard/);
         const category = categoryMatch ? `${categoryMatch[1]}% Keyboard` : 'Barebones';
-        return { name, link, price, category, stock };
+        return { name, link, price, category, image, stock };
       }
 
+      // Handle Accessories category
       if (categoryLabel === 'Accessories') {
-        const classList = Array.from(el.classList);
         const catClass = classList.find((cls) => cls.startsWith('product_cat-'));
         let category = catClass?.replace('product_cat-', '').replace(/-/g, ' ') || 'Accessories';
-        category = category.replace(/\b\w/g, (c) => c.toUpperCase()); // Capitalize
-
-        return { name, link, price, category, stock };
+        category = category.replace(/\b\w/g, (c) => c.toUpperCase());
+        return { name, link, price, category, image, stock };
       }
 
-      // For mouse, just use the fixed categoryLabel
-      return { name, link, price, category: categoryLabel, stock };
+      // Default category (Mouse, Deskmat, etc.)
+      return { name, link, price, category: categoryLabel, image, stock };
     });
   }, categoryLabel);
 
@@ -66,7 +76,7 @@ export async function GET() {
   try {
     browser = await puppeteer.launch({
       headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'], // For serverless compatibility
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
     });
 
     const page = await browser.newPage();
@@ -88,7 +98,6 @@ export async function GET() {
     return NextResponse.json(allProducts, { status: 200 });
   } catch (error) {
     if (browser) await browser.close();
-    console.error('❌ Scraping failed:', error);
     return NextResponse.json(
       { error: 'Scraping failed', details: (error as Error).message },
       { status: 500 }
