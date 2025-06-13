@@ -1,0 +1,98 @@
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Search, TrendingUp, Shield, Zap } from "lucide-react"
+import Link from "next/link"
+
+export function HeroSection() {
+  return (
+    <section className="relative bg-gradient-to-br from-gray-50 via-purple-50 to-white text-gray-900 overflow-hidden pt-16">
+      {/* Background Pattern */}
+      <div
+        className="absolute inset-0 opacity-30"
+        style={{
+          backgroundImage: `radial-gradient(circle at 1px 1px, rgba(147, 51, 234, 0.1) 1px, transparent 0)`,
+          backgroundSize: "24px 24px",
+        }}
+      />
+
+      {/* Gradient Overlays */}
+      <div className="absolute inset-0 bg-gradient-to-r from-purple-100/50 to-pink-100/50" />
+      <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-purple-400/20 rounded-full blur-3xl" />
+
+      <div className="relative container mx-auto px-4 py-12 lg:py-16">
+        <div className="max-w-5xl mx-auto text-center">
+          <div className="mb-8">
+            <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm border border-purple-200 rounded-full px-4 py-2 text-sm font-medium mb-6 shadow-sm">
+              <div className="size-4 rounded-full bg-purple-400 flex items-center justify-center">
+                <span className="text-white text-[8px] font-bold">MK</span>
+              </div>
+              {"India's #1 Keyboard Price Comparison Platform"}
+            </div>
+
+            <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
+              Find the Best Deals on
+              <br />
+              <span className="bg-gradient-to-r from-purple-600 via-purple-400 to-purple-600 bg-clip-text text-transparent">
+                Mechanical Keyboards
+              </span>
+            </h1>
+          </div>
+
+          <p className="text-lg md:text-xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed">
+            Compare prices across India's top vendors. Track price history, get instant alerts, and never overpay for
+            your dream setup again.
+          </p>
+
+          <div className="flex flex-col sm:flex-row gap-4 max-w-2xl mx-auto mb-10">
+            <div className="relative flex-1">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+              <Input
+                placeholder="Search keyboards, mice, switches..."
+                className="pl-12 py-4 text-lg bg-white/80 backdrop-blur-sm border-gray-200 text-gray-900 placeholder:text-gray-500 focus:bg-white focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20 transition-all duration-200 shadow-sm"
+              />
+            </div>
+            <Button
+              asChild
+              size="lg"
+              className="bg-purple-400 hover:bg-purple-500 px-8 py-4 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200 text-white"
+            >
+              <Link href="/search">Search Products</Link>
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+            <div className="group flex items-center justify-center gap-4 p-6 bg-white/60 backdrop-blur-sm border border-gray-200 rounded-xl hover:bg-white/80 hover:border-purple-200 hover:shadow-lg transition-all duration-300">
+              <div className="p-2 bg-green-100 rounded-lg group-hover:bg-green-200 transition-colors">
+                <TrendingUp className="h-6 w-6 text-green-600" />
+              </div>
+              <div className="text-left">
+                <div className="font-semibold text-gray-900">Real-time Tracking</div>
+                <div className="text-sm text-gray-600">Live price updates</div>
+              </div>
+            </div>
+
+            <div className="group flex items-center justify-center gap-4 p-6 bg-white/60 backdrop-blur-sm border border-gray-200 rounded-xl hover:bg-white/80 hover:border-purple-200 hover:shadow-lg transition-all duration-300">
+              <div className="p-2 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
+                <Shield className="h-6 w-6 text-blue-600" />
+              </div>
+              <div className="text-left">
+                <div className="font-semibold text-gray-900">Trusted Vendors</div>
+                <div className="text-sm text-gray-600">Verified sellers only</div>
+              </div>
+            </div>
+
+            <div className="group flex items-center justify-center gap-4 p-6 bg-white/60 backdrop-blur-sm border border-gray-200 rounded-xl hover:bg-white/80 hover:border-purple-200 hover:shadow-lg transition-all duration-300">
+              <div className="p-2 bg-purple-100 rounded-lg group-hover:bg-purple-200 transition-colors">
+                <Zap className="h-6 w-6 text-purple-600" />
+              </div>
+              <div className="text-left">
+                <div className="font-semibold text-gray-900">Instant Updates</div>
+                <div className="text-sm text-gray-600">Never miss a product</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
