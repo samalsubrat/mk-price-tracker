@@ -1,19 +1,22 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-function getBaseName(name: string): string {
-  return name
-    .replace(
-      /\s?(Hot-Swappable|Mechanical Keyboard|Keyboard|Tri-Mode|Gasket.*|Wired.*|with Knob|Wireless|75%|80%|96%?)?/gi,
-      ""
-    )
-    .replace(/\s+/g, " ")
-    .trim()
-    .toLowerCase(); // Lowercase for consistent grouping
+// Extract both groupKey and baseName from product name
+function extractBaseNames(name: string) {
+  // Remove common descriptors for grouping
+  const cleaned = name
+    .replace(/\b(Hot-Swappable|Mechanical Keyboard|Keyboard|Tri-Mode|Gasket.*|Wired.*|with Knob|Wireless|75%|80%|96%?)\b/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  return {
+    groupKey: cleaned.toLowerCase().replace(/\s+/g, ''), // e.g., "aulaf75"
+    baseName: cleaned.replace(/\b\w/g, l => l.toUpperCase()), // e.g., "Aula F75"
+  };
 }
 
 export async function GET() {
   try {
-    const base = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+    const base = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 
     const urls = [
       `${base}/api/ctrlshift-scrape`,
@@ -36,38 +39,36 @@ export async function GET() {
 
     const combined = responses.flat();
 
-    const groupedMap: Record<string, any[]> = {};
+    const groupedMap: Record<string, { baseName: string; products: any[] }> = {};
 
     for (const product of combined) {
-      const key = getBaseName(product.name);
+      const { groupKey, baseName } = extractBaseNames(product.name);
 
-      if (!groupedMap[key]) {
-        groupedMap[key] = [];
+      if (!groupedMap[groupKey]) {
+        groupedMap[groupKey] = {
+          baseName,
+          products: [],
+        };
       }
 
-      groupedMap[key].push(product);
+      groupedMap[groupKey].products.push(product);
     }
 
-    // Convert the groupedMap to a sorted array of objects
-    const groupedSorted = Object.entries(groupedMap)
-      .map(([baseName, products]) => ({
-        baseName: baseName.charAt(0).toUpperCase() + baseName.slice(1), // Aulaf75
+    const groupedSorted = Object.values(groupedMap)
+      .map(({ baseName, products }) => ({
+        baseName,
         products: products.sort((a, b) =>
-          a.name.localeCompare(b.name, undefined, { sensitivity: "base" })
+          a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
         ),
       }))
-
       .sort((a, b) =>
-        a.baseName.localeCompare(b.baseName, undefined, { sensitivity: "base" })
+        a.baseName.localeCompare(b.baseName, undefined, { sensitivity: 'base' })
       );
 
     return NextResponse.json(groupedSorted, { status: 200 });
   } catch (error) {
     return NextResponse.json(
-      {
-        error: "Failed to combine scrapers",
-        details: (error as Error).message,
-      },
+      { error: 'Failed to combine scrapers', details: (error as Error).message },
       { status: 500 }
     );
   }
