@@ -97,24 +97,53 @@ export function DataTableDemo() {
   const [rowSelection, setRowSelection] = React.useState({});
 
   React.useEffect(() => {
+    let isMounted = true;
     const fetchData = async () => {
+      if (!isMounted) return;
+      
       try {
-        const response = await fetch('/api/thockshop-scrape');
-        if (!response.ok) throw new Error('Failed to fetch data');
-        const products = await response.json();
-        // Filter for keyboard products
-        const keyboardProducts = products.filter((product: Product) => 
-          product.category.toLowerCase().includes('keyboard')
+        const apiEndpoints = [
+          '/api/meckeys-scrape',
+          '/api/thockshop-scrape',
+        ];
+
+        const responses = await Promise.all(
+          apiEndpoints.map(endpoint => fetch(endpoint))
         );
+
+        if (!isMounted) return;
+
+        const allProducts = await Promise.all(
+          responses.map(response => {
+            if (!response.ok) return [];
+            return response.json();
+          })
+        );
+
+        if (!isMounted) return;
+
+        // Flatten and filter for keyboard products
+        const keyboardProducts = allProducts
+          .flat()
+          .filter((product: Product) => 
+            product.category.toLowerCase().includes('keyboard')
+          );
+
         setData(keyboardProducts);
       } catch (err) {
+        if (!isMounted) return;
         setError(err instanceof Error ? err.message : 'An error occurred');
       } finally {
+        if (!isMounted) return;
         setLoading(false);
       }
     };
 
     fetchData();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const table = useReactTable({
@@ -133,6 +162,11 @@ export function DataTableDemo() {
       columnFilters,
       columnVisibility,
       rowSelection,
+    },
+    initialState: {
+      pagination: {
+        pageSize: 50,
+      },
     },
   });
 
