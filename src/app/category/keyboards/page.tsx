@@ -13,7 +13,7 @@ import {
   useReactTable,
   VisibilityState,
 } from "@tanstack/react-table";
-import { ArrowUpDown, ChevronDown, MoreHorizontal } from "lucide-react";
+import { ArrowUpDown } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,50 +27,18 @@ import {
 } from "@/components/ui/table";
 import MaxWidthWrapper from "@/components/MaxWidthWrapper";
 
-const data: Payment[] = [
-  {
-    id: "m5gr84i9",
-    amount: 316,
-    status: "success",
-    email: "ken99@example.com",
-  },
-  {
-    id: "3u1reuv4",
-    amount: 242,
-    status: "success",
-    email: "Abe45@example.com",
-  },
-  {
-    id: "derv1ws0",
-    amount: 837,
-    status: "processing",
-    email: "Monserrat44@example.com",
-  },
-  {
-    id: "5kma53ae",
-    amount: 874,
-    status: "success",
-    email: "Silas22@example.com",
-  },
-  {
-    id: "bhqecj4p",
-    amount: 721,
-    status: "failed",
-    email: "carmella@example.com",
-  },
-];
+interface Product {
+  name: string;
+  link: string;
+  price: string;
+  category: string;
+  stock: string;
+  image: string;
+}
 
-export type Payment = {
-  id: string;
-  amount: number;
-  status: "pending" | "processing" | "success" | "failed";
-  email: string;
-};
-
-export const columns: ColumnDef<Payment>[] = [
-
+export const columns: ColumnDef<Product>[] = [
   {
-    accessorKey: "email",
+    accessorKey: "name",
     header: ({ column }) => {
       return (
         <Button
@@ -78,37 +46,76 @@ export const columns: ColumnDef<Payment>[] = [
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           Keyboard Name
-          <ArrowUpDown />
+          <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
     },
-    cell: ({ row }) => <div className="lowercase">{row.getValue("email")}</div>,
+    cell: ({ row }) => (
+      <div className="font-medium">
+        <a 
+          href={row.original.link} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="hover:underline"
+        >
+          {row.getValue("name")}
+        </a>
+      </div>
+    ),
   },
   {
-    accessorKey: "amount",
-    header: () => <div className="text-right">Amount</div>,
+    accessorKey: "price",
+    header: () => <div className="text-right">Price</div>,
     cell: ({ row }) => {
-      const amount = parseFloat(row.getValue("amount"));
-
-      // Format the amount as a dollar amount
-      const formatted = new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: "INR",
-      }).format(amount);
-
-      return <div className="text-right font-medium">{formatted}</div>;
+      const price = row.getValue("price") as string;
+      return <div className="text-right font-medium">{price}</div>;
+    },
+  },
+  {
+    accessorKey: "stock",
+    header: () => <div className="text-right">Stock</div>,
+    cell: ({ row }) => {
+      const stock = row.getValue("stock") as string;
+      return (
+        <div className={`text-right font-medium ${
+          stock === "instock" ? "text-green-600" : "text-red-600"
+        }`}>
+          {stock === "instock" ? "In Stock" : "Out of Stock"}
+        </div>
+      );
     },
   },
 ];
 
 export function DataTableDemo() {
+  const [data, setData] = React.useState<Product[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
   const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
-  );
-  const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({});
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
+  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
+
+  React.useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch('/api/thockshop-scrape');
+        if (!response.ok) throw new Error('Failed to fetch data');
+        const products = await response.json();
+        // Filter for keyboard products
+        const keyboardProducts = products.filter((product: Product) => 
+          product.category.toLowerCase().includes('keyboard')
+        );
+        setData(keyboardProducts);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An error occurred');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const table = useReactTable({
     data,
@@ -129,15 +136,35 @@ export function DataTableDemo() {
     },
   });
 
+  if (loading) {
+    return (
+      <MaxWidthWrapper>
+        <div className="flex items-center justify-center h-96">
+          <div className="text-lg">Loading keyboards...</div>
+        </div>
+      </MaxWidthWrapper>
+    );
+  }
+
+  if (error) {
+    return (
+      <MaxWidthWrapper>
+        <div className="flex items-center justify-center h-96">
+          <div className="text-lg text-red-600">Error: {error}</div>
+        </div>
+      </MaxWidthWrapper>
+    );
+  }
+
   return (
     <MaxWidthWrapper>
       <div className="w-full">
         <div className="flex items-center py-4">
           <Input
-            placeholder="Filter emails..."
-            value={(table.getColumn("email")?.getFilterValue() as string) ?? ""}
+            placeholder="Search keyboards..."
+            value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
             onChange={(event) =>
-              table.getColumn("email")?.setFilterValue(event.target.value)
+              table.getColumn("name")?.setFilterValue(event.target.value)
             }
             className="max-w-sm"
           />
@@ -185,7 +212,7 @@ export function DataTableDemo() {
                     colSpan={columns.length}
                     className="h-24 text-center"
                   >
-                    No results.
+                    No keyboards found.
                   </TableCell>
                 </TableRow>
               )}

@@ -6,39 +6,52 @@ interface Product {
   link: string;
   price: string;
   image: string;
+  category: string;
+  stock: string;
 }
 
-async function scrapeNeoMacro(page: puppeteer.Page): Promise<Product[]> {
+async function scrapeNeoMacro(
+  page: puppeteer.Page,
+  url: string,
+  category: string
+): Promise<Product[]> {
   const allProducts: Product[] = [];
   let pageNum = 1;
 
   while (true) {
-    const url = `https://neomacro.in/collections/all-1?page=${pageNum}`;
-    await page.goto(url, { waitUntil: 'domcontentloaded' });
+    const pagedUrl = url.includes('?') ? `${url}&page=${pageNum}` : `${url}?page=${pageNum}`;
+    await page.goto(pagedUrl, { waitUntil: 'domcontentloaded' });
 
-    const products = await page.evaluate(() => {
-      const items = Array.from(document.querySelectorAll('ul#product-grid li.grid__item'));
+   const products = await page.evaluate((category) => {
+  const items = Array.from(document.querySelectorAll('ul#product-grid li.grid__item'));
 
-      return items.map((item) => {
-        const name =
-          item.querySelector('h3.card__heading a')?.textContent?.trim() || 'No name';
+  return items.map((item) => {
+    const name =
+      item.querySelector('h3.card__heading a')?.textContent?.trim() || 'No name';
 
-        const link =
-          'https://neomacro.in' +
-          (item.querySelector('h3.card__heading a') as HTMLAnchorElement)?.getAttribute('href');
+    const link =
+      'https://neomacro.in' +
+      (item.querySelector('h3.card__heading a') as HTMLAnchorElement)?.getAttribute('href');
 
-        const price =
-          item.querySelector('.price__container .price-item--last')?.textContent?.trim() ||
-          item.querySelector('.price__container .price-item--regular')?.textContent?.trim() ||
-          'No price';
+    let rawPrice =
+      item.querySelector('.price__container .price-item--last')?.textContent?.trim() ||
+      item.querySelector('.price__container .price-item--regular')?.textContent?.trim() ||
+      'No price';
 
-        const imgSrc =
-          (item.querySelector('.card__media img') as HTMLImageElement)?.getAttribute('src') || '';
-        const image = imgSrc.startsWith('http') ? imgSrc : `https:${imgSrc}`;
+    // ✅ Normalize price
+    let price = rawPrice.replace(/From\s*/i, '').replace(/\.00$/, '').trim();
 
-        return { name, link, price, image };
-      });
-    });
+    const imgSrc =
+      (item.querySelector('.card__media img') as HTMLImageElement)?.getAttribute('src') || '';
+    const image = imgSrc.startsWith('http') ? imgSrc : `https:${imgSrc}`;
+
+    const stockBadge = item.querySelector('.card__badge.bottom.left')?.textContent?.toLowerCase();
+    const stock = stockBadge?.includes('sold out') ? 'outofstock' : 'instock';
+
+    return { name, link, price, image, category, stock };
+  });
+}, category);
+
 
     if (products.length === 0) break;
 
@@ -59,7 +72,21 @@ export async function GET() {
     });
 
     const page = await browser.newPage();
-    const allProducts = await scrapeNeoMacro(page);
+
+    const categories = [
+      { url: 'https://neomacro.in/collections/keyboards', category: 'Keyboards' },
+      { url: 'https://neomacro.in/collections/mouse', category: 'Mouse' },
+      { url: 'https://neomacro.in/collections/deskmats', category: 'Deskmats' },
+      { url: 'https://neomacro.in/collections/accessories', category: 'Accessories' },
+    ];
+
+    let allProducts: Product[] = [];
+
+    for (const { url, category } of categories) {
+      const products = await scrapeNeoMacro(page, url, category);
+      allProducts.push(...products);
+    }
+
     await browser.close();
 
     return NextResponse.json(allProducts, { status: 200 });

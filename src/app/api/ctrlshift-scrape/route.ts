@@ -5,20 +5,24 @@ interface Product {
   name: string;
   link: string;
   price: string;
-  stock: string;
+  category: string;
   image: string;
+  stock: string;
 }
 
-async function scrapeCtrlShiftAll(page: puppeteer.Page): Promise<Product[]> {
+async function scrapeCtrlShiftCategory(
+  page: puppeteer.Page,
+  url: string,
+  categoryLabel: string
+): Promise<Product[]> {
   const allProducts: Product[] = [];
   let pageNum = 1;
 
   while (true) {
-    const url = `https://ctrlshiftstore.com/collections/all?page=${pageNum}`;
+    const pagedUrl = url.includes('?') ? `${url}&page=${pageNum}` : `${url}?page=${pageNum}`;
+    await page.goto(pagedUrl, { waitUntil: 'domcontentloaded' });
 
-    await page.goto(url, { waitUntil: 'domcontentloaded' });
-
-    const productsOnPage = await page.evaluate(() => {
+    const products = await page.evaluate((categoryLabel) => {
       const items = Array.from(document.querySelectorAll('div.grid__item, li.grid__item'));
 
       return items.map((item) => {
@@ -30,9 +34,10 @@ async function scrapeCtrlShiftAll(page: puppeteer.Page): Promise<Product[]> {
 
         const priceEl = item.querySelector('.price-item--sale.price-item--last') ||
                         item.querySelector('.price-item.price-item--regular');
-        const price = priceEl?.textContent?.trim().replace(/\s+/g, ' ') || 'No price';
+        let rawPrice = priceEl?.textContent?.trim() || 'No price';
+        const price = rawPrice.replace(/From\s*/i, '').replace(/\.00$/, '').trim();
 
-        const soldOut = !!item.querySelector('.badge--sold-out, .product-item__badge--sold-out');
+        const soldOut = !!item.querySelector('div.card__badge.bottom.right span.badge')?.textContent?.toLowerCase().includes('sold out');
         const stock = soldOut ? 'outofstock' : 'instock';
 
         const imgEl = item.querySelector('img');
@@ -42,13 +47,13 @@ async function scrapeCtrlShiftAll(page: puppeteer.Page): Promise<Product[]> {
         if (image.startsWith('//')) image = 'https:' + image;
         else if (image.startsWith('/')) image = `https://ctrlshiftstore.com${image}`;
 
-        return { name, link, price, stock, image };
+        return { name, link, price, image, category: categoryLabel, stock };
       });
-    });
+    }, categoryLabel);
 
-    if (productsOnPage.length === 0) break;
+    if (products.length === 0) break;
 
-    allProducts.push(...productsOnPage);
+    allProducts.push(...products);
     pageNum++;
   }
 
@@ -65,14 +70,29 @@ export async function GET() {
     });
 
     const page = await browser.newPage();
-    const products = await scrapeCtrlShiftAll(page);
+
+    const ctrlShiftUrls = [
+      { url: 'https://ctrlshiftstore.com/collections/keyboards', category: 'Keyboards' },
+      { url: 'https://ctrlshiftstore.com/collections/switches', category: 'Switches' },
+      { url: 'https://ctrlshiftstore.com/collections/barebones', category: 'Barebones' },
+      { url: 'https://ctrlshiftstore.com/collections/keycaps', category: 'Keycaps' },
+      { url: 'https://ctrlshiftstore.com/collections/deskmats', category: 'Deskmats' },
+    ];
+
+    const allProducts: Product[] = [];
+
+    for (const { url, category } of ctrlShiftUrls) {
+      const products = await scrapeCtrlShiftCategory(page, url, category);
+      allProducts.push(...products);
+    }
+
     await browser.close();
 
-    return NextResponse.json(products, { status: 200 });
-  } catch (err) {
+    return NextResponse.json(allProducts, { status: 200 });
+  } catch (error) {
     if (browser) await browser.close();
     return NextResponse.json(
-      { error: 'Scraping failed', details: (err as Error).message },
+      { error: 'Scraping failed', details: (error as Error).message },
       { status: 500 }
     );
   }

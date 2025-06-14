@@ -5,6 +5,7 @@ interface Product {
   name: string;
   link: string;
   price: string;
+  category: string;
   image: string;
   stock: string;
 }
@@ -41,9 +42,17 @@ async function scrapeCuriosityCaps(page: puppeteer.Page): Promise<Product[]> {
         let image = imgEl?.getAttribute('src') || imgEl?.getAttribute('data-src') || 'No image';
         if (image.startsWith('//')) image = 'https:' + image;
 
-        const stock = item.querySelector('.sold-out-message')?.classList.contains('hidden') ? 'instock' : 'outofstock';
+        const soldOut = item.querySelector('.sold-out-message')?.classList.contains('hidden') === false;
+        const stock = soldOut ? 'outofstock' : 'instock';
 
-        return { name, link, price, image, stock };
+        return {
+          name,
+          link,
+          price,
+          image,
+          stock,
+          category: 'Keycaps'
+        };
       });
     });
 
@@ -62,7 +71,7 @@ export async function GET() {
   try {
     browser = await puppeteer.launch({
       headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
     });
 
     const page = await browser.newPage();

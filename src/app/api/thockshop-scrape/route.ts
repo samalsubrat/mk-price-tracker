@@ -38,11 +38,20 @@ async function scrapeCategory(page: puppeteer.Page, url: string, categoryLabel: 
       const imgSrc = card.querySelector('img')?.getAttribute('src') || '';
       const image = imgSrc.startsWith('http') ? imgSrc : 'https://www.thethockshop.com' + imgSrc;
 
-      const price = card.querySelector('.text-black')?.textContent?.trim().replace(/\s+/g, ' ') || 'No price';
+      const allSpans = card.querySelectorAll('.text-black');
+      let price = 'No price';
+      for (const span of allSpans) {
+        const text = span.textContent?.trim();
+        if (text && /(₹|Rs\.?)(\s)?\d/.test(text)) {
+          price = text.replace(/,/g, '').replace(/\s+/g, ' ');
+          break;
+        }
+      }
 
-      // Approximation: If there's no "Sold out" badge, we assume it's in stock.
-      const soldOut = card.innerHTML.toLowerCase().includes('sold out');
-      const stock = soldOut ? 'outofstock' : 'instock';
+      const stockLabel = card.querySelector('span.text-xs span.font-bold')?.textContent?.trim().toLowerCase();
+      let stock = 'unknown';
+      if (stockLabel === 'out of stock') stock = 'outofstock';
+      else if (stockLabel === 'in stock') stock = 'instock';
 
       return { name, link, price, category: categoryLabel, image, stock };
     });

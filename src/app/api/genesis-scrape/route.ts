@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server';
-import * as puppeteer from 'puppeteer';
+import { NextResponse } from "next/server";
+import * as puppeteer from "puppeteer";
 
 interface Product {
   name: string;
@@ -7,42 +7,67 @@ interface Product {
   price: string;
   stock: string;
   image: string;
+  category: string;
 }
 
-async function scrapeGenesisPCAll(page: puppeteer.Page): Promise<Product[]> {
+async function scrapeGenesisPC(
+  page: puppeteer.Page,
+  url: string,
+  category: string
+): Promise<Product[]> {
   const allProducts: Product[] = [];
   let pageNum = 1;
 
   while (true) {
-    const url = `https://www.genesispc.in/collections/all?page=${pageNum}`;
-    await page.goto(url, { waitUntil: 'domcontentloaded' });
+    const pageUrl = url.includes("?")
+      ? `${url}&page=${pageNum}`
+      : `${url}?page=${pageNum}`;
+    await page.goto(pageUrl, { waitUntil: "domcontentloaded" });
 
-    const productsOnPage = await page.evaluate(() => {
-      const items = Array.from(document.querySelectorAll('div.grid.product-grid > a.grid__item, ul.grid > li.grid__item'));
-      // fallback depending on grid structure
+    const products = await page.evaluate((category) => {
+      const items = Array.from(
+        document.querySelectorAll(
+          "div.grid.product-grid > a.grid__item, ul.grid > li.grid__item"
+        )
+      );
+
       return items.map((item) => {
-        const name = item.querySelector('h3.card__heading, .card__heading')?.textContent?.trim() || 'No name';
-        const href = item.getAttribute('href') || '';
-        const link = href.startsWith('http') ? href : `https://www.genesispc.in${href}`;
+        const name =
+          item
+            .querySelector("h3.card__heading, .card__heading")
+            ?.textContent?.trim() || "No name";
 
-        const priceEl = item.querySelector('.price-item--last, .price-item--regular');
-        const price = priceEl?.textContent?.trim().replace(/\s+/g, ' ') || 'No price';
+        const href =
+          item.querySelector("h3.card__heading a")?.getAttribute("href") || "";
+        const link = href.startsWith("http")
+          ? href
+          : `https://www.genesispc.in${href}`;
 
-        const soldOut = !!item.querySelector('.sold-out, .badge--sold-out');
-        const stock = soldOut ? 'outofstock' : 'instock';
+        let price =
+          item
+            .querySelector(".price-item--last, .price-item--regular")
+            ?.textContent?.trim() || "No price";
+        price = price.replace(/^From\s*/i, "").replace(/\.\d{2}$/, ""); // Clean "From", decimals
 
-        const imgEl = item.querySelector('img');
-        let image = imgEl?.getAttribute('src') || imgEl?.getAttribute('data-src') || 'No image';
-        if (image.startsWith('//')) image = 'https:' + image;
-        else if (image.startsWith('/')) image = `https://www.genesispc.in${image}`;
+        const soldOut = !!item.querySelector(".badge--sold-out, .sold-out");
+        const stock = soldOut ? "outofstock" : "instock";
 
-        return { name, link, price, stock, image };
+        const imgEl = item.querySelector("img");
+        let image =
+          imgEl?.getAttribute("src") ||
+          imgEl?.getAttribute("data-src") ||
+          "No image";
+        if (image.startsWith("//")) image = "https:" + image;
+        else if (image.startsWith("/"))
+          image = `https://www.genesispc.in${image}`;
+
+        return { name, link, price, stock, image, category };
       });
-    });
+    }, category);
 
-    if (productsOnPage.length === 0) break;
+    if (products.length === 0) break;
 
-    allProducts.push(...productsOnPage);
+    allProducts.push(...products);
     pageNum++;
   }
 
@@ -55,18 +80,56 @@ export async function GET() {
   try {
     browser = await puppeteer.launch({
       headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
     });
 
     const page = await browser.newPage();
-    const products = await scrapeGenesisPCAll(page);
-    await browser.close();
 
-    return NextResponse.json(products, { status: 200 });
-  } catch (err) {
+    const categories = [
+      {
+        url: "https://www.genesispc.in/collections/keyboards",
+        category: "Keyboards",
+      },
+      { url: "https://www.genesispc.in/collections/mouse", category: "Mouse" },
+      {
+        url: "https://www.genesispc.in/collections/mousepad",
+        category: "Mousepad",
+      },
+      {
+        url: "https://www.genesispc.in/collections/deskmats",
+        category: "Deskmats",
+      },
+      {
+        url: "https://www.genesispc.in/collections/mouse-skates",
+        category: "Mouse Skates and Grips",
+      },
+      {
+        url: "https://www.genesispc.in/collections/keycaps",
+        category: "Keycaps",
+      },
+      {
+        url: "https://www.genesispc.in/collections/tools-and-accessories",
+        category: "Tools & Accessories",
+      },
+      {
+        url: "https://www.genesispc.in/collections/switches-and-accessories",
+        category: "Switches & Accessories",
+      },
+    ];
+
+    let allProducts: Product[] = [];
+
+    for (const { url, category } of categories) {
+      const products = await scrapeGenesisPC(page, url, category);
+      allProducts.push(...products);
+    }
+
+    await browser.close();
+    return NextResponse.json(allProducts, { status: 200 });
+  } catch (error) {
     if (browser) await browser.close();
     return NextResponse.json(
-      { error: 'Scraping failed', details: (err as Error).message },
+      { error: "Scraping failed", details: (error as Error).message },
       { status: 500 }
     );
   }
