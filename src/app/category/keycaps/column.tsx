@@ -1,32 +1,30 @@
-// src/components/keycaps/columns.ts
-"use client";
+"use client"
 
-import { ColumnDef } from "@tanstack/react-table";
-import Link from "next/link";
-import { ArrowUpDown } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import type { ColumnDef } from "@tanstack/react-table"
+import Link from "next/link"
+import { ArrowUpDown } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
 export interface Product {
-  base_name: string;
-  price: string;
-  stock: string;
+  base_name: string
+  price: string
+  stock: string
 }
 
 export const columns: ColumnDef<Product>[] = [
   {
     accessorKey: "base_name",
     header: () => "Keycap Name",
-    size: 400,
     cell: ({ row }) => {
-      const baseName = row.getValue("base_name") as string;
-      const slug = encodeURIComponent(baseName);
+      const baseName = row.getValue("base_name") as string
+      const slug = encodeURIComponent(baseName)
       return (
-        <Link href={`/category/keycaps/${slug}`}>
-          <span className="text-blue-600 hover:underline font-medium">
+        <Link href={`/category/keycaps/${slug}`} className="block">
+          <span className="text-blue-600 hover:text-blue-800 hover:underline font-medium line-clamp-2 sm:line-clamp-1">
             {baseName}
           </span>
         </Link>
-      );
+      )
     },
   },
   {
@@ -35,21 +33,19 @@ export const columns: ColumnDef<Product>[] = [
       <Button
         variant="ghost"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="flex items-center justify-end w-full"
+        className="h-auto p-0 hover:bg-transparent justify-end w-full text-xs sm:text-sm"
       >
         Price
-        <ArrowUpDown className="ml-2 h-4 w-4" />
+        <ArrowUpDown className="ml-1 h-3 w-3 sm:h-4 sm:w-4" />
       </Button>
     ),
-    size: 150,
     cell: ({ row }) => {
-      const price = row.getValue("price") as string;
-      return <div className="text-right font-medium">{price}</div>;
+      const price = row.getValue("price") as string
+      return <div className="text-right font-medium text-sm sm:text-base">{price}</div>
     },
     sortingFn: (rowA, rowB, columnId) => {
-      const getPrice = (val: string) =>
-        parseFloat(val.replace(/[^0-9.]/g, "")) || Infinity;
-      return getPrice(rowA.getValue(columnId)) - getPrice(rowB.getValue(columnId));
+      const getPrice = (val: string) => Number.parseFloat(val.replace(/[^0-9.]/g, "")) || Number.POSITIVE_INFINITY
+      return getPrice(rowA.getValue(columnId)) - getPrice(rowB.getValue(columnId))
     },
   },
   {
@@ -58,29 +54,36 @@ export const columns: ColumnDef<Product>[] = [
       <Button
         variant="ghost"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="flex items-center justify-end w-full"
+        className="h-auto p-0 hover:bg-transparent justify-end w-full text-xs sm:text-sm"
       >
         Stock
-        <ArrowUpDown className="ml-2 h-4 w-4" />
+        <ArrowUpDown className="ml-1 h-3 w-3 sm:h-4 sm:w-4" />
       </Button>
     ),
-    size: 150,
     cell: ({ row }) => {
-      const stock = row.getValue("stock") as string;
+      const stock = row.getValue("stock") as string
+      const isInStock = stock === "instock"
       return (
-        <div
-          className={`text-right font-medium ${
-            stock === "instock" ? "text-green-600" : "text-red-600"
-          }`}
-        >
-          {stock === "instock" ? "In Stock" : "Out of Stock"}
+        <div className="text-right">
+          <span
+            className={`
+              inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
+              ${
+                isInStock
+                  ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                  : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+              }
+            `}
+          >
+            {isInStock ? "In Stock" : "Out of Stock"}
+          </span>
         </div>
-      );
+      )
     },
     sortingFn: (rowA, rowB, columnId) => {
-      const a = rowA.getValue(columnId) === "instock" ? 0 : 1;
-      const b = rowB.getValue(columnId) === "instock" ? 0 : 1;
-      return a - b;
+      const a = rowA.getValue(columnId) === "instock" ? 0 : 1
+      const b = rowB.getValue(columnId) === "instock" ? 0 : 1
+      return a - b
     },
   },
-];
+]

@@ -1,78 +1,126 @@
-import { Metadata } from "next";
-import { createClient } from "@/utils/supabase/server";
-import { cookies } from "next/headers";
+import type { Metadata } from "next"
+import { createClient } from "@/utils/supabase/server"
+import { cookies } from "next/headers"
+import { Button } from "@/components/ui/button"
+import MaxWidthWrapper from "@/components/MaxWidthWrapper"
 
 interface PageProps {
   params: Promise<{
-    basename: string;
-  }>;
+    basename: string
+  }>
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const resolvedParams = await params;
-  const baseName = decodeURIComponent(resolvedParams.basename);
+  const resolvedParams = await params
+  const baseName = decodeURIComponent(resolvedParams.basename)
   return {
     title: baseName,
-  };
+  }
 }
 
 export default async function ProductPage({ params }: PageProps) {
-  const cookieStore = cookies();
-  const supabase = createClient(cookieStore);
+  const cookieStore = cookies()
+  const supabase = createClient(cookieStore)
 
   // Decode URL param
-  const resolvedParams = await params;
-  const baseName = decodeURIComponent(resolvedParams.basename);
+  const resolvedParams = await params
+  const baseName = decodeURIComponent(resolvedParams.basename)
 
   // 1️⃣ Fetch product group using base_name
   const { data: group, error: groupError } = await supabase
     .from("product_groups")
     .select("*")
     .eq("base_name", baseName)
-    .single();
+    .single()
 
   if (groupError) {
-    console.error("Error fetching group:", groupError);
-    return <div>Error loading product group</div>;
+    console.error("Error fetching group:", groupError)
+    return (
+      <MaxWidthWrapper className="py-8">
+        <div className="max-w-md mx-auto text-center">
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Error Loading Product</h3>
+          <p className="text-gray-600">Unable to load the requested product group.</p>
+        </div>
+      </MaxWidthWrapper>
+    )
   }
 
   // 2️⃣ Fetch all products in this group
   const { data: products, error: productsError } = await supabase
     .from("products")
-    .select("*")
+    .select("*, vendor")
     .eq("group_key", group.group_key)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
 
   if (productsError) {
-    console.error("Error fetching products:", productsError);
-    return <div>Error loading products</div>;
+    console.error("Error fetching products:", productsError)
+    return (
+      <MaxWidthWrapper className="py-8">
+        <div className="max-w-md mx-auto text-center">
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Error Loading Products</h3>
+          <p className="text-gray-600">Unable to load products for this group.</p>
+        </div>
+      </MaxWidthWrapper>
+    )
   }
 
   return (
-    <div className="container mx-auto py-8">
-      <h1 className="text-3xl font-bold mb-6">{group.base_name}</h1>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {products.map((product) => (
-          <div key={product.id} className="border rounded-lg p-4">
-            <h2 className="text-xl font-semibold mb-2">{product.name}</h2>
-            <p className="text-gray-600 mb-2">Price: {product.price}</p>
-            <p className={`mb-2 ${
-              product.stock === "instock" ? "text-green-600" : "text-red-600"
-            }`}>
-              {product.stock === "instock" ? "In Stock" : "Out of Stock"}
-            </p>
-            <a
-              href={product.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
-            >
-              View Product
-            </a>
+    <MaxWidthWrapper className="py-6">
+      {/* Header Section */}
+      <div className="mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{group.base_name}</h1>
+      </div>
+
+      {/* Products List */}
+      <div className="space-y-3">
+        {products.map((product, index) => (
+          <div
+            key={product.id}
+            className="bg-white border border-gray-100 rounded-xl p-6 hover:shadow-md transition-all duration-300"
+          >
+            {/* Vendor Header */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="bg-blue-50 px-4 py-2 rounded-lg">
+                <span className="text-blue-700 font-semibold text-sm uppercase tracking-wide">
+                  {product.vendor || "Unknown Vendor"}
+                </span>
+              </div>
+              <span
+                className={`
+                  px-3 py-1 rounded-full text-xs font-medium
+                  ${product.stock === "instock" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}
+                `}
+              >
+                {product.stock === "instock" ? "In Stock" : "Out of Stock"}
+              </span>
+            </div>
+
+            {/* Product Details */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex-1">
+                <h3 className="text-lg font-medium text-gray-900 mb-2 leading-relaxed">{product.name}</h3>
+                <div className="text-2xl font-bold text-gray-900">{product.price}</div>
+              </div>
+
+              <div className="flex-shrink-0">
+                <Button asChild className="w-full sm:w-auto bg-gray-900 hover:bg-gray-800 text-white px-6 py-2">
+                  <a href={product.link} target="_blank" rel="noopener noreferrer">
+                    View Product
+                  </a>
+                </Button>
+              </div>
+            </div>
           </div>
         ))}
       </div>
-    </div>
-  );
-} 
+
+      {/* Empty State */}
+      {products.length === 0 && (
+        <div className="text-center py-16 bg-gray-50 rounded-xl">
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">No Products Found</h3>
+          <p className="text-gray-600">No variants are available for this product group.</p>
+        </div>
+      )}
+    </MaxWidthWrapper>
+  )
+}
