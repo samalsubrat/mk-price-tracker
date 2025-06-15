@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -15,6 +16,7 @@ import {
 } from "@tanstack/react-table";
 import { ArrowUpDown } from "lucide-react";
 
+import { createClient } from "@/utils/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -28,123 +30,111 @@ import {
 import MaxWidthWrapper from "@/components/MaxWidthWrapper";
 
 interface Product {
-  name: string;
-  link: string;
+  base_name: string;
   price: string;
-  category: string;
   stock: string;
-  image: string;
 }
 
 export const columns: ColumnDef<Product>[] = [
   {
-    accessorKey: "name",
-    header: ({ column }) => {
+    accessorKey: "base_name",
+    header: () => "Keyboard Name",
+    cell: ({ row }) => {
+      const baseName = row.getValue("base_name") as string;
+      const slug = encodeURIComponent(baseName);
       return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Keyboard Name
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
+        <Link href={`/category/keyboards/${slug}`}>
+          <span className="text-blue-600 hover:underline font-medium">
+            {baseName}
+          </span>
+        </Link>
       );
     },
-    cell: ({ row }) => (
-      <div className="font-medium">
-        <a 
-          href={row.original.link} 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="hover:underline"
-        >
-          {row.getValue("name")}
-        </a>
-      </div>
-    ),
   },
   {
     accessorKey: "price",
-    header: () => <div className="text-right">Price</div>,
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        className="ml-auto"
+      >
+        Price
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
     cell: ({ row }) => {
       const price = row.getValue("price") as string;
       return <div className="text-right font-medium">{price}</div>;
     },
+    sortingFn: (rowA, rowB, columnId) => {
+      const getPrice = (val: string) =>
+        parseFloat(val.replace(/[^0-9.]/g, "")) || Infinity;
+      return getPrice(rowA.getValue(columnId)) - getPrice(rowB.getValue(columnId));
+    },
   },
   {
     accessorKey: "stock",
-    header: () => <div className="text-right">Stock</div>,
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        className="ml-auto"
+      >
+        Stock
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
     cell: ({ row }) => {
       const stock = row.getValue("stock") as string;
       return (
-        <div className={`text-right font-medium ${
-          stock === "instock" ? "text-green-600" : "text-red-600"
-        }`}>
+        <div
+          className={`text-right font-medium ${
+            stock === "instock" ? "text-green-600" : "text-red-600"
+          }`}
+        >
           {stock === "instock" ? "In Stock" : "Out of Stock"}
         </div>
       );
+    },
+    sortingFn: (rowA, rowB, columnId) => {
+      const a = rowA.getValue(columnId) === "instock" ? 0 : 1;
+      const b = rowB.getValue(columnId) === "instock" ? 0 : 1;
+      return a - b;
     },
   },
 ];
 
 export function DataTableDemo() {
+  const supabase = React.useMemo(() => createClient(), []);
   const [data, setData] = React.useState<Product[]>([]);
   const [loading, setLoading] = React.useState(true);
-  const [error, setError] = React.useState<string | null>(null);
-  const [sorting, setSorting] = React.useState<SortingState>([]);
+
+  const [sorting, setSorting] = React.useState<SortingState>([
+    { id: "stock", desc: false }, // initial sort by stock
+  ]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
 
   React.useEffect(() => {
-    let isMounted = true;
-    const fetchData = async () => {
-      if (!isMounted) return;
-      
-      try {
-        const apiEndpoints = [
-          '/api/meckeys-scrape',
-          '/api/thockshop-scrape',
-        ];
+    async function fetchData() {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("product_groups")
+        .select("base_name, price, stock")
+        .or("category.ilike.%keyboard%,category.ilike.%barebones%");
 
-        const responses = await Promise.all(
-          apiEndpoints.map(endpoint => fetch(endpoint))
-        );
-
-        if (!isMounted) return;
-
-        const allProducts = await Promise.all(
-          responses.map(response => {
-            if (!response.ok) return [];
-            return response.json();
-          })
-        );
-
-        if (!isMounted) return;
-
-        // Flatten and filter for keyboard products
-        const keyboardProducts = allProducts
-          .flat()
-          .filter((product: Product) => 
-            product.category.toLowerCase().includes('keyboard')
-          );
-
-        setData(keyboardProducts);
-      } catch (err) {
-        if (!isMounted) return;
-        setError(err instanceof Error ? err.message : 'An error occurred');
-      } finally {
-        if (!isMounted) return;
-        setLoading(false);
+      if (error) {
+        console.error("Supabase fetch error:", error.message);
+      } else {
+        setData(data || []);
       }
-    };
+      setLoading(false);
+    }
 
     fetchData();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  }, [supabase]);
 
   const table = useReactTable({
     data,
@@ -170,61 +160,44 @@ export function DataTableDemo() {
     },
   });
 
-  if (loading) {
-    return (
-      <MaxWidthWrapper>
-        <div className="flex items-center justify-center h-96">
-          <div className="text-lg">Loading keyboards...</div>
-        </div>
-      </MaxWidthWrapper>
-    );
-  }
-
-  if (error) {
-    return (
-      <MaxWidthWrapper>
-        <div className="flex items-center justify-center h-96">
-          <div className="text-lg text-red-600">Error: {error}</div>
-        </div>
-      </MaxWidthWrapper>
-    );
-  }
-
   return (
     <MaxWidthWrapper>
       <div className="w-full">
         <div className="flex items-center py-4">
           <Input
             placeholder="Search keyboards..."
-            value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
+            value={(table.getColumn("base_name")?.getFilterValue() as string) ?? ""}
             onChange={(event) =>
-              table.getColumn("name")?.setFilterValue(event.target.value)
+              table.getColumn("base_name")?.setFilterValue(event.target.value)
             }
             className="max-w-sm"
           />
         </div>
+
         <div className="rounded-md border">
           <Table>
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => {
-                    return (
-                      <TableHead key={header.id}>
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
-                      </TableHead>
-                    );
-                  })}
+                  {headerGroup.headers.map((header) => (
+                    <TableHead key={header.id}>
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(header.column.columnDef.header, header.getContext())}
+                    </TableHead>
+                  ))}
                 </TableRow>
               ))}
             </TableHeader>
+
             <TableBody>
-              {table.getRowModel().rows?.length ? (
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={columns.length} className="text-center">
+                    Loading...
+                  </TableCell>
+                </TableRow>
+              ) : table.getRowModel().rows.length ? (
                 table.getRowModel().rows.map((row) => (
                   <TableRow
                     key={row.id}
@@ -232,20 +205,14 @@ export function DataTableDemo() {
                   >
                     {row.getVisibleCells().map((cell) => (
                       <TableCell key={cell.id}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </TableCell>
                     ))}
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell
-                    colSpan={columns.length}
-                    className="h-24 text-center"
-                  >
+                  <TableCell colSpan={columns.length} className="text-center">
                     No keyboards found.
                   </TableCell>
                 </TableRow>
@@ -253,25 +220,24 @@ export function DataTableDemo() {
             </TableBody>
           </Table>
         </div>
+
         <div className="flex items-center justify-end space-x-2 py-4">
-          <div className="space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => table.previousPage()}
-              disabled={!table.getCanPreviousPage()}
-            >
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
-            >
-              Next
-            </Button>
-          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage()}
+          >
+            Previous
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage()}
+          >
+            Next
+          </Button>
         </div>
       </div>
     </MaxWidthWrapper>
