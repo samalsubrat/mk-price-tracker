@@ -38,13 +38,13 @@ interface Product {
 export const columns: ColumnDef<Product>[] = [
   {
     accessorKey: "base_name",
-    header: () => "Keyboard Name",
+    header: () => "Keycap Name",
     size: 400,
     cell: ({ row }) => {
       const baseName = row.getValue("base_name") as string;
       const slug = encodeURIComponent(baseName);
       return (
-        <Link href={`/category/keyboards/${slug}`}>
+        <Link href={`/category/keycaps/${slug}`}>
           <span className="text-blue-600 hover:underline font-medium">
             {baseName}
           </span>
@@ -108,7 +108,7 @@ export const columns: ColumnDef<Product>[] = [
   },
 ];
 
-function KeyboardTable() {
+function KeycapTable() {
   const supabase = React.useMemo(() => createClient(), []);
   const [data, setData] = React.useState<Product[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -126,7 +126,7 @@ function KeyboardTable() {
       const { data, error } = await supabase
         .from("product_groups")
         .select("base_name, price, stock")
-        .or("category.ilike.%keyboard%,category.ilike.%barebones%");
+        .or("category.ilike.%keycaps%,category.ilike.%novelties%,category.ilike.%artisan%,category.ilike.%extras%,category.ilike.%group buys%,category.ilike.%clearance%");
 
       if (error) {
         console.error("Supabase fetch error:", error.message);
@@ -168,7 +168,7 @@ function KeyboardTable() {
       <div className="w-full">
         <div className="flex items-center py-4">
           <Input
-            placeholder="Search keyboards..."
+            placeholder="Search keycaps..."
             value={(table.getColumn("base_name")?.getFilterValue() as string) ?? ""}
             onChange={(event) =>
               table.getColumn("base_name")?.setFilterValue(event.target.value)
@@ -216,7 +216,7 @@ function KeyboardTable() {
               ) : (
                 <TableRow>
                   <TableCell colSpan={columns.length} className="text-center">
-                    No keyboards found.
+                    No keycaps found.
                   </TableCell>
                 </TableRow>
               )}
@@ -247,4 +247,4 @@ function KeyboardTable() {
   );
 }
 
-export default KeyboardTable;
+export default KeycapTable; 
