@@ -8,7 +8,10 @@ import { FlickeringGrid } from "./flickering-grid"
 
 export function HeroSection() {
   return (
-    <section className="relative bg-gradient-to-br from-gray-50 via-purple-50 to-white text-gray-900 overflow-hidden pt-16">
+    <section className="bg-gradient-to-br from-white via-gray-50 to-purple-50 -mt-5 pb-20 sm:py-32 relative overflow-hidden pt-16">
+      {/* Large Curved Background Element */}
+      <div className="absolute h-[300px] w-[1000px] sm:w-[2000px] sm:h-[768px] lg:w-[5000px] lg:h-[1000px] rounded-[100%] bg-white left-1/2 -translate-x-1/2 bg-[radial-gradient(closest-side,#ffffff_90%,#FBF3FD)] top-[calc(100%-96px)] sm:top-[calc(100%-100px)] z-50 mt-10 sm:mt-2 border-t border-gray-200 " />
+
       {/* Flickering Grid Background */}
       <div className="absolute inset-0 opacity-40">
         <FlickeringGrid
@@ -37,7 +40,7 @@ export function HeroSection() {
       <div className="absolute inset-0 bg-gradient-to-r from-purple-100/50 to-pink-100/50" />
       <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-purple-400/20 rounded-full blur-3xl animate-pulse" />
 
-      <div className="relative container mx-auto px-4 py-12 lg:py-16 z-10">
+      <div className="relative container mx-auto px-4 py-12 lg:py-8 z-10">
         <div className="max-w-5xl mx-auto text-center">
           <div className="mb-8">
             <div className="inline-flex items-center gap-2 bg-white/90 backdrop-blur-sm border border-purple-200 rounded-full px-4 py-2 text-sm font-medium mb-6 shadow-sm">
@@ -76,7 +79,7 @@ export function HeroSection() {
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+          {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
             <div className="group flex items-center justify-center gap-4 p-6 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl hover:bg-white/95 hover:border-purple-200 hover:shadow-lg transition-all duration-300">
               <div className="p-2 bg-green-100 rounded-lg group-hover:bg-green-200 transition-colors">
                 <TrendingUp className="h-6 w-6 text-green-600" />
@@ -105,10 +108,11 @@ export function HeroSection() {
                 <div className="font-semibold text-gray-900">New Updates</div>
                 <div className="text-sm text-gray-600">Never miss a product</div>
               </div>
-            </div>
-          </div>
+            </div> */}
+          {/* </div> */}
         </div>
       </div>
+
     </section>
   )
 }
