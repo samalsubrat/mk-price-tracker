@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 // Helper to normalize product name
-function extractBaseNames(name: string) {
+function extractbasenames(name: string) {
   const cleaned = name
     .replace(/\b(Hot-Swappable|Mechanical Keyboard|Keyboard|Tri-Mode|Gasket.*|Wired.*|with Knob|Wireless|75%|80%|96%?)\b/gi, '')
     .replace(/\s+/g, ' ')
@@ -9,7 +9,7 @@ function extractBaseNames(name: string) {
 
   return {
     groupKey: cleaned.toLowerCase().replace(/\s+/g, ''),
-    baseName: cleaned.replace(/\b\w/g, l => l.toUpperCase()),
+    basename: cleaned.replace(/\b\w/g, l => l.toUpperCase()),
   };
 }
 
@@ -50,19 +50,19 @@ export async function GET() {
 
     const combined = responses.flat();
 
-    const groupedMap: Record<string, { baseName: string; products: any[] }> = {};
+    const groupedMap: Record<string, { basename: string; products: any[] }> = {};
 
     for (const product of combined) {
-      const { groupKey, baseName } = extractBaseNames(product.name);
+      const { groupKey, basename } = extractbasenames(product.name);
 
       if (!groupedMap[groupKey]) {
-        groupedMap[groupKey] = { baseName, products: [] };
+        groupedMap[groupKey] = { basename, products: [] };
       }
 
       groupedMap[groupKey].products.push(product);
     }
 
-    const grouped = Object.values(groupedMap).map(({ baseName, products }) => {
+    const grouped = Object.values(groupedMap).map(({ basename, products }) => {
       const sortedProducts = products.sort((a, b) =>
         a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
       );
@@ -80,7 +80,7 @@ export async function GET() {
       const category = cheapestProduct?.category || '';
 
       return {
-        baseName,
+        basename,
         price: cheapestProduct?.price || '',
         stock,
         category,
@@ -90,9 +90,9 @@ export async function GET() {
 
     const groupedSorted = [
       ...grouped.filter((item) => item.stock === 'instock')
-        .sort((a, b) => a.baseName.localeCompare(b.baseName, undefined, { sensitivity: 'base' })),
+        .sort((a, b) => a.basename.localeCompare(b.basename, undefined, { sensitivity: 'base' })),
       ...grouped.filter((item) => item.stock === 'outofstock')
-        .sort((a, b) => a.baseName.localeCompare(b.baseName, undefined, { sensitivity: 'base' }))
+        .sort((a, b) => a.basename.localeCompare(b.basename, undefined, { sensitivity: 'base' }))
     ];
 
     return NextResponse.json(groupedSorted, { status: 200 });
