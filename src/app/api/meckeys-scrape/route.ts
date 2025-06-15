@@ -59,16 +59,16 @@ async function scrapeCategory(
       const stock = classList.includes("instock") ? "instock" : "outofstock";
 
       // Handle Keyboard category
-      if (categoryLabel === "Keyboard") {
-        const catClass = classList.find((cls) =>
-          cls.startsWith("product_cat-")
-        );
-        const categoryMatch = catClass?.match(/product_cat-(\d+)-keyboard/);
-        const category = categoryMatch
-          ? `${categoryMatch[1]}% Keyboard`
-          : "Barebones";
-        return { name, link, price, category, image, stock };
-      }
+      // if (categoryLabel === "Keyboard") {
+      //   const catClass = classList.find((cls) =>
+      //     cls.startsWith("product_cat-")
+      //   );
+      //   const categoryMatch = catClass?.match(/product_cat-(\d+)-keyboard/);
+      //   const category = categoryMatch
+      //     ? `${categoryMatch[1]}% Keyboard`
+      //     : "Barebones";
+      //   return { name, link, price, category, image, stock };
+      // }
 
       // Handle Accessories category
       if (categoryLabel === "Accessories") {

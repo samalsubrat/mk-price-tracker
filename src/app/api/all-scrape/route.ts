@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-// Extract and normalize baseName
+// Helper to normalize product name
 function extractBaseNames(name: string) {
   const cleaned = name
     .replace(/\b(Hot-Swappable|Mechanical Keyboard|Keyboard|Tri-Mode|Gasket.*|Wired.*|with Knob|Wireless|75%|80%|96%?)\b/gi, '')
@@ -8,59 +8,42 @@ function extractBaseNames(name: string) {
     .trim();
 
   return {
-    groupKey: cleaned.toLowerCase().replace(/\s+/g, ''), // e.g., "aulaf75"
-    baseName: cleaned.replace(/\b\w/g, (l) => l.toUpperCase()), // e.g., "Aula F75"
+    groupKey: cleaned.toLowerCase().replace(/\s+/g, ''),
+    baseName: cleaned.replace(/\b\w/g, l => l.toUpperCase()),
   };
 }
 
-// Get numeric price from string
+// Extract numeric price from string like ₹5,500.00 or Rs. 5400
 function getNumericPrice(price: string): number {
   const num = price.replace(/[^0-9.]/g, '');
   return parseFloat(num) || Infinity;
-}
-
-// Custom vendor name extractor
-function getVendor(link: string): string {
-  try {
-    const domain = new URL(link).hostname.replace('www.', '').split('.')[0];
-
-    const knownVendors: Record<string, string> = {
-      meckeys: 'Meckeys',
-      neomacro: 'NeoMacro',
-      ctrlshift: 'CtrlShiftStore',
-      thockshop: 'Thockshop',
-      stacks: 'StacksKB',
-      stackskb: 'StacksKB',
-      loadout: 'Loadout',
-      curiousity: 'CuriousityCaps',
-      genesispc: 'GenesisPC',
-    };
-
-    return knownVendors[domain.toLowerCase()] || domain.charAt(0).toUpperCase() + domain.slice(1).toLowerCase();
-  } catch {
-    return 'Unknown';
-  }
 }
 
 export async function GET() {
   try {
     const base = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 
-    const urls = [
-      `${base}/api/ctrlshift-scrape`,
-      `${base}/api/curiousity-scrape`,
-      `${base}/api/genesis-scrape`,
-      `${base}/api/loadout-scrape`,
-      `${base}/api/meckeys-scrape`,
-      `${base}/api/neomacro-scrape`,
-      `${base}/api/stacks-scrape`,
-      `${base}/api/thockshop-scrape`,
-    ];
+    const scraperVendors: Record<string, string> = {
+      'ctrlshift-scrape': 'CtrlShift',
+      'curiousity-scrape': 'Curiositycaps',
+      'genesis-scrape': 'GenesisPC',
+      'loadout-scrape': 'Loadout',
+      'meckeys-scrape': 'Meckeys',
+      'neomacro-scrape': 'NeoMacro',
+      'stacks-scrape': 'StackSKB',
+      'thockshop-scrape': 'TheThockshop',
+    };
+
+    const urls = Object.entries(scraperVendors).map(([key, vendor]) => ({
+      url: `${base}/api/${key}`,
+      vendor,
+    }));
 
     const responses = await Promise.all(
-      urls.map((url) =>
+      urls.map(({ url, vendor }) =>
         fetch(url)
-          .then((res) => (res.ok ? res.json() : []))
+          .then(res => res.ok ? res.json() : [])
+          .then(data => data.map((item: any) => ({ ...item, vendor })))
           .catch(() => [])
       )
     );
@@ -72,9 +55,6 @@ export async function GET() {
     for (const product of combined) {
       const { groupKey, baseName } = extractBaseNames(product.name);
 
-      // Add vendor info
-      product.vendor = getVendor(product.link);
-
       if (!groupedMap[groupKey]) {
         groupedMap[groupKey] = { baseName, products: [] };
       }
@@ -82,36 +62,38 @@ export async function GET() {
       groupedMap[groupKey].products.push(product);
     }
 
-    const groupedSorted = Object.values(groupedMap)
-      .map(({ baseName, products }) => {
-        // Sort products with in-stock first, then alphabetically
-        const sortedProducts = products.sort((a, b) => {
-          const aStock = a.stock?.toLowerCase() === 'instock' ? 0 : 1;
-          const bStock = b.stock?.toLowerCase() === 'instock' ? 0 : 1;
-
-          if (aStock !== bStock) return aStock - bStock;
-          return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
-        });
-
-        const cheapestProduct = [...products].sort(
-          (a, b) => getNumericPrice(a.price) - getNumericPrice(b.price)
-        )[0];
-
-        const stock =
-          products.some((p) => p.stock?.toLowerCase() === 'instock' || p.stock?.toLowerCase() === 'in stock')
-            ? 'instock'
-            : 'outofstock';
-
-        return {
-          baseName,
-          price: cheapestProduct?.price || '',
-          stock,
-          products: sortedProducts,
-        };
-      })
-      .sort((a, b) =>
-        a.baseName.localeCompare(b.baseName, undefined, { sensitivity: 'base' })
+    const grouped = Object.values(groupedMap).map(({ baseName, products }) => {
+      const sortedProducts = products.sort((a, b) =>
+        a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
       );
+
+      const cheapestProduct = [...products].sort(
+        (a, b) => getNumericPrice(a.price) - getNumericPrice(b.price)
+      )[0];
+
+      const stock =
+        products.some((p) => p.stock?.toLowerCase() === 'instock') ||
+        products.some((p) => p.stock?.toLowerCase() === 'in stock')
+          ? 'instock'
+          : 'outofstock';
+
+      const category = cheapestProduct?.category || '';
+
+      return {
+        baseName,
+        price: cheapestProduct?.price || '',
+        stock,
+        category,
+        products: sortedProducts,
+      };
+    });
+
+    const groupedSorted = [
+      ...grouped.filter((item) => item.stock === 'instock')
+        .sort((a, b) => a.baseName.localeCompare(b.baseName, undefined, { sensitivity: 'base' })),
+      ...grouped.filter((item) => item.stock === 'outofstock')
+        .sort((a, b) => a.baseName.localeCompare(b.baseName, undefined, { sensitivity: 'base' }))
+    ];
 
     return NextResponse.json(groupedSorted, { status: 200 });
   } catch (error) {
