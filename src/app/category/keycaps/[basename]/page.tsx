@@ -2,6 +2,8 @@ import type { Metadata } from "next"
 import { createClient } from "@/utils/supabase/server"
 import { cookies } from "next/headers"
 import { Button } from "@/components/ui/button"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { ExternalLink } from "lucide-react"
 import MaxWidthWrapper from "@/components/MaxWidthWrapper"
 
 interface PageProps {
@@ -37,7 +39,7 @@ export default async function ProductPage({ params }: PageProps) {
     console.error("Error fetching group:", groupError)
     return (
       <MaxWidthWrapper className="py-8">
-        <div className="max-w-md mx-auto text-center">
+        <div className="text-center">
           <h3 className="text-lg font-semibold text-gray-900 mb-2">Error Loading Product</h3>
           <p className="text-gray-600">Unable to load the requested product group.</p>
         </div>
@@ -56,7 +58,7 @@ export default async function ProductPage({ params }: PageProps) {
     console.error("Error fetching products:", productsError)
     return (
       <MaxWidthWrapper className="py-8">
-        <div className="max-w-md mx-auto text-center">
+        <div className="text-center">
           <h3 className="text-lg font-semibold text-gray-900 mb-2">Error Loading Products</h3>
           <p className="text-gray-600">Unable to load products for this group.</p>
         </div>
@@ -67,60 +69,115 @@ export default async function ProductPage({ params }: PageProps) {
   return (
     <MaxWidthWrapper className="py-6">
       {/* Header Section */}
-      <div className="mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{group.base_name}</h1>
+      <div className="mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 leading-tight break-words">
+          {group.base_name}
+        </h1>
       </div>
 
-      {/* Products List */}
-      <div className="space-y-3">
-        {products.map((product, index) => (
-          <div
-            key={product.id}
-            className="bg-white border border-gray-100 rounded-xl p-6 hover:shadow-md transition-all duration-300"
-          >
-            {/* Vendor Header */}
-            <div className="flex items-center justify-between mb-4">
-              <div className="bg-blue-50 px-4 py-2 rounded-lg">
-                <span className="text-blue-700 font-semibold text-sm uppercase tracking-wide">
-                  {product.vendor || "Unknown Vendor"}
-                </span>
-              </div>
-              <span
-                className={`
-                  px-3 py-1 rounded-full text-xs font-medium
-                  ${product.stock === "instock" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}
-                `}
-              >
-                {product.stock === "instock" ? "In Stock" : "Out of Stock"}
-              </span>
-            </div>
+      {/* Table Container */}
+      <div className="rounded-md border overflow-hidden">
+        <Table className="w-full table-fixed">
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[40%] sm:w-[45%] md:w-[50%] px-3 sm:px-4 py-3 text-left">
+                <span className="text-xs sm:text-sm font-medium">Product Name</span>
+              </TableHead>
+              <TableHead className="w-[22%] sm:w-[20%] md:w-[18%] px-3 sm:px-4 py-3 text-left">
+                <span className="text-xs sm:text-sm font-medium">Source</span>
+              </TableHead>
+              <TableHead className="w-[18%] sm:w-[17%] md:w-[16%] px-3 sm:px-4 py-3 text-right">
+                <span className="text-xs sm:text-sm font-medium">Price</span>
+              </TableHead>
+              <TableHead className="w-[12%] sm:w-[13%] md:w-[11%] px-3 sm:px-4 py-3 text-right">
+                <span className="text-xs sm:text-sm font-medium">Stock</span>
+              </TableHead>
+              <TableHead className="w-[8%] sm:w-[5%] md:w-[5%] px-3 sm:px-4 py-3 text-center">
+                <span className="text-xs sm:text-sm font-medium sr-only sm:not-sr-only">Link</span>
+              </TableHead>
+            </TableRow>
+          </TableHeader>
 
-            {/* Product Details */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div className="flex-1">
-                <h3 className="text-lg font-medium text-gray-900 mb-2 leading-relaxed">{product.name}</h3>
-                <div className="text-2xl font-bold text-gray-900">{product.price}</div>
-              </div>
+          <TableBody>
+            {products.length > 0 ? (
+              products.map((product) => (
+                <TableRow key={product.id} className="hover:bg-muted/50">
+                  {/* Product Name */}
+                  <TableCell className="w-[40%] sm:w-[45%] md:w-[50%] px-3 sm:px-4 py-4 align-top">
+                    <div className="pr-2 overflow-hidden">
+                      <span className="text-xs sm:text-sm font-medium text-gray-900 leading-tight break-words word-break hyphens-auto">
+                        {product.name}
+                      </span>
+                    </div>
+                  </TableCell>
 
-              <div className="flex-shrink-0">
-                <Button asChild className="w-full sm:w-auto bg-gray-900 hover:bg-gray-800 text-white px-6 py-2">
-                  <a href={product.link} target="_blank" rel="noopener noreferrer">
-                    View Product
-                  </a>
-                </Button>
-              </div>
-            </div>
-          </div>
-        ))}
+                  {/* Source/Vendor */}
+                  <TableCell className="w-[22%] sm:w-[20%] md:w-[18%] px-3 sm:px-4 py-4 align-top">
+                    <div className="overflow-hidden">
+                      <span className="text-xs sm:text-sm text-gray-700 font-medium break-words word-break">
+                        {product.vendor || "Unknown"}
+                      </span>
+                    </div>
+                  </TableCell>
+
+                  {/* Price */}
+                  <TableCell className="w-[18%] sm:w-[17%] md:w-[16%] px-3 sm:px-4 py-4 text-right align-top">
+                    <div className="overflow-hidden">
+                      <span className="text-xs sm:text-sm font-semibold text-gray-900 break-words">
+                        {product.price}
+                      </span>
+                    </div>
+                  </TableCell>
+
+                  {/* Stock Status */}
+                  <TableCell className="w-[12%] sm:w-[13%] md:w-[11%] px-3 sm:px-4 py-4 text-right align-top">
+                    <div className="flex justify-end overflow-hidden">
+                      <span
+                        className={`
+                          inline-flex items-center px-1 sm:px-2 py-0.5 sm:py-1 rounded-full text-xs font-medium
+                          ${
+                            product.stock === "instock"
+                              ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                              : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                          }
+                        `}
+                      >
+                        <span className="hidden sm:inline whitespace-nowrap">
+                          {product.stock === "instock" ? "In Stock" : "Out of Stock"}
+                        </span>
+                        <span className="sm:hidden">{product.stock === "instock" ? "✓" : "✗"}</span>
+                      </span>
+                    </div>
+                  </TableCell>
+
+                  {/* Link */}
+                  <TableCell className="w-[8%] sm:w-[5%] md:w-[5%] px-3 sm:px-4 py-4 text-center align-top">
+                    <Button asChild size="sm" variant="ghost" className="h-6 w-6 sm:h-8 sm:w-8 p-0 shrink-0">
+                      <a
+                        href={product.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center"
+                      >
+                        <ExternalLink className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                      </a>
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-12">
+                  <div className="flex flex-col items-center space-y-2">
+                    <div className="text-muted-foreground text-sm">No products found.</div>
+                    <div className="text-xs text-muted-foreground">No variants are available for this product.</div>
+                  </div>
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
       </div>
-
-      {/* Empty State */}
-      {products.length === 0 && (
-        <div className="text-center py-16 bg-gray-50 rounded-xl">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No Products Found</h3>
-          <p className="text-gray-600">No variants are available for this product group.</p>
-        </div>
-      )}
     </MaxWidthWrapper>
   )
 }
