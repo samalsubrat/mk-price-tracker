@@ -20,7 +20,7 @@ export const columns: ColumnDef<Product>[] = [
       const slug = encodeURIComponent(baseName)
       return (
         <Link href={`/category/mouse/${slug}`} className="block">
-          <span className="text-blue-600 hover:text-blue-800 hover:underline font-medium text-xs sm:text-sm leading-tight break-words">
+          <span className="text-blue-600 hover:text-blue-800 hover:underline font-medium line-clamp-2 sm:line-clamp-1">
             {baseName}
           </span>
         </Link>
