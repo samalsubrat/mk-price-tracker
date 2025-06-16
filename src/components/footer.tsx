@@ -10,33 +10,7 @@ export function Footer() {
       <MaxWidthWrapper className=" py-16 relative z-10">
         <div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-16">
-            {/* Pages Section */}
-            <div>
-              <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-6">Pages</h3>
-              <ul className="space-y-4">
-                <li>
-                  <Link href="/" className="text-gray-600 hover:text-purple-600 transition-colors">
-                    Home
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/categories" className="text-gray-600 hover:text-purple-600 transition-colors">
-                    Categories
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/deals" className="text-gray-600 hover:text-purple-600 transition-colors">
-                    Deals
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/contact" className="text-gray-600 hover:text-purple-600 transition-colors">
-                    Contact
-                  </Link>
-                </li>
-              </ul>
-            </div>
-
+           
             {/* Categories Section */}
             <div>
               <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-6">Categories</h3>
@@ -58,7 +32,29 @@ export function Footer() {
                 </li>
                 <li>
                   <Link href="/category/mouse" className="text-gray-600 hover:text-purple-600 transition-colors">
-                    Gaming Mice
+                    Mice
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/category/accessories" className="text-gray-600 hover:text-purple-600 transition-colors">
+                    Accessories
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+             {/* Pages Section */}
+             <div>
+              <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-6">Pages</h3>
+              <ul className="space-y-4">
+                <li>
+                  <Link href="/" className="text-gray-600 hover:text-purple-600 transition-colors">
+                    Home
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/contact" className="text-gray-600 hover:text-purple-600 transition-colors">
+                    Contact
                   </Link>
                 </li>
               </ul>
@@ -79,7 +75,7 @@ export function Footer() {
 
           {/* Copyright */}
           <div className="mt-16 pt-8 border-t border-gray-200">
-            <p className="text-sm text-gray-500">© 2024 All rights reserved.</p>
+            <p className="text-sm text-gray-500">© 2025 All rights reserved.</p>
           </div>
         </div>
       </MaxWidthWrapper>
