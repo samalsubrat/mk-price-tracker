@@ -42,7 +42,7 @@ export function HeroSection() {
 
       <div className="relative container mx-auto px-4 py-12 lg:py-8 z-10">
         <div className="max-w-5xl mx-auto text-center">
-          <div className="mb-8">
+          <div className="mb-8" >
             <div className="inline-flex items-center gap-2 bg-white/90 backdrop-blur-sm border border-purple-200 rounded-full px-4 py-2 text-sm font-medium mb-6 shadow-sm">
               <div className="size-4 rounded-full bg-purple-400 flex items-center justify-center">
                 <span className="text-white text-[8px] font-bold">MK</span>

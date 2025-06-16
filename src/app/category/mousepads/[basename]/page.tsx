@@ -103,8 +103,8 @@ export default async function ProductPage({ params }: PageProps) {
               products.map((product) => (
                 <TableRow key={product.id} className="hover:bg-muted/50">
                   {/* Product Name */}
-                  <TableCell className="w-[40%] sm:w-[45%] md:w-[50%] px-3 sm:px-4 py-4 align-top">
-                    <div className="pr-2 overflow-hidden">
+                  <TableCell className="w-[40%] sm:w-[45%] md:w-[50%] px-3 sm:px-4 py-4">
+                    <div className="pr-2">
                       <span className="text-xs sm:text-sm font-medium text-gray-900 leading-tight break-words word-break hyphens-auto">
                         {product.name}
                       </span>
@@ -112,8 +112,8 @@ export default async function ProductPage({ params }: PageProps) {
                   </TableCell>
 
                   {/* Source/Vendor */}
-                  <TableCell className="w-[22%] sm:w-[20%] md:w-[18%] px-3 sm:px-4 py-4 align-top">
-                    <div className="overflow-hidden">
+                  <TableCell className="w-[22%] sm:w-[20%] md:w-[18%] px-3 sm:px-4 py-4">
+                    <div>
                       <span className="text-xs sm:text-sm text-gray-700 font-medium break-words word-break">
                         {product.vendor || "Unknown"}
                       </span>
@@ -121,8 +121,8 @@ export default async function ProductPage({ params }: PageProps) {
                   </TableCell>
 
                   {/* Price */}
-                  <TableCell className="w-[18%] sm:w-[17%] md:w-[16%] px-3 sm:px-4 py-4 text-right align-top">
-                    <div className="overflow-hidden">
+                  <TableCell className="w-[18%] sm:w-[17%] md:w-[16%] px-3 sm:px-4 py-4 text-right">
+                    <div>
                       <span className="text-xs sm:text-sm font-semibold text-gray-900 break-words">
                         {product.price}
                       </span>
@@ -130,8 +130,8 @@ export default async function ProductPage({ params }: PageProps) {
                   </TableCell>
 
                   {/* Stock Status */}
-                  <TableCell className="w-[12%] sm:w-[13%] md:w-[11%] px-3 sm:px-4 py-4 text-right align-top">
-                    <div className="flex justify-end overflow-hidden">
+                  <TableCell className="w-[12%] sm:w-[13%] md:w-[11%] px-3 sm:px-4 py-4 text-right">
+                    <div className="flex justify-end">
                       <span
                         className={`
                           inline-flex items-center px-1 sm:px-2 py-0.5 sm:py-1 rounded-full text-xs font-medium
@@ -151,8 +151,8 @@ export default async function ProductPage({ params }: PageProps) {
                   </TableCell>
 
                   {/* Link */}
-                  <TableCell className="w-[8%] sm:w-[5%] md:w-[5%] px-3 sm:px-4 py-4 text-center align-top">
-                    <Button asChild size="sm" variant="ghost" className="h-6 w-6 sm:h-8 sm:w-8 p-0 shrink-0">
+                  <TableCell className="w-[8%] sm:w-[5%] md:w-[5%] px-3 sm:px-4 py-4 text-center">
+                    <Button asChild size="sm" variant="ghost" className="h-6 w-6 sm:h-8 sm:w-8 p-0">
                       <a
                         href={product.link}
                         target="_blank"

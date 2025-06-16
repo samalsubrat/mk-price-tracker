@@ -93,7 +93,7 @@ const Navbar = () => {
                     asChild
                     className={navigationMenuTriggerStyle()}
                   >
-                    <Link href="/new">New Products</Link>
+                    <Link href="/contact">Contact</Link>
                   </NavigationMenuLink>
                 </NavigationMenuItem>
               </NavigationMenuList>
