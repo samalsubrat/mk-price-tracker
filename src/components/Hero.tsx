@@ -5,8 +5,17 @@ import { Input } from "@/components/ui/input"
 import { Search, TrendingUp, Shield, Zap } from "lucide-react"
 import Link from "next/link"
 import { FlickeringGrid } from "./flickering-grid"
+import { useState } from "react"
 
 export function HeroSection() {
+  const [search, setSearch] = useState("");
+
+  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const url = search.trim() ? `/search?q=${encodeURIComponent(search)}` : "/search";
+    window.open(url, "_blank");
+  };
+
   return (
     <section className="bg-gradient-to-br from-white via-gray-50 to-purple-50 -mt-5 pb-20 sm:py-32 relative overflow-hidden pt-16">
       {/* Large Curved Background Element */}
@@ -44,13 +53,11 @@ export function HeroSection() {
         <div className="max-w-5xl mx-auto text-center">
           <div className="mb-8" >
             <div className="inline-flex items-center gap-2 bg-white/90 backdrop-blur-sm border border-purple-200 rounded-full px-4 py-2 text-sm font-medium mb-6 shadow-sm">
-              <div className="size-4 rounded-full bg-purple-400 flex items-center justify-center">
-                <span className="text-white text-[8px] font-bold">MK</span>
-              </div>
-              {"India's #1 Keyboard Price Comparison Platform"}
+              <div className="size-4 rounded-full bg-purple-400 flex items-center justify-center"/>
+              {"Track, Compare, Buy Smarter."}
             </div>
 
-            <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
+            <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight -tracking-wide">
               Find the Best Deals on
               <br />
               <span className="bg-gradient-to-r from-purple-600 via-purple-400 to-purple-600 bg-clip-text text-transparent">
@@ -66,17 +73,21 @@ export function HeroSection() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 max-w-2xl mx-auto mb-10 items-center">
-            <Input
-              placeholder="Search keyboards, mice, switches..."
-              className="py-4.5 text-lg bg-white/95 backdrop-blur-sm border-gray-300 text-gray-900 placeholder:text-gray-500 focus:bg-white focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20 transition-all duration-200 shadow-sm"
-            />
-            <Button
-              asChild
-              size="lg"
-              className="bg-purple-500 hover:bg-purple-600 px-8 py-4 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200 text-white"
-            >
-              <Link href="/search">Search Products</Link>
-            </Button>
+            <form onSubmit={handleSearch} className="flex w-full gap-4">
+              <Input
+                placeholder="Search keyboards, mice, switches..."
+                className="py-4.5 text-lg bg-white/95 backdrop-blur-sm border-gray-300 text-gray-900 placeholder:text-gray-500 focus:bg-white focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20 transition-all duration-200 shadow-sm"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+              />
+              <Button
+                type="submit"
+                size="lg"
+                className="bg-purple-500 hover:bg-purple-600 px-8 py-4 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200 text-white"
+              >
+                Search Products
+              </Button>
+            </form>
           </div>
 
           {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
