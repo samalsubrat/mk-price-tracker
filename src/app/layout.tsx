@@ -3,8 +3,9 @@ import "./globals.css";
 import Navbar from "@/components/Navbar";
 import { Footer } from "@/components/footer";
 import { Inter, DM_Sans } from "next/font/google"
-const inter = Inter({ subsets: ["latin"] })
+import PageTransition from "@/components/PageTransition";
 
+const inter = Inter({ subsets: ["latin"] })
 const dmSans = DM_Sans({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
@@ -25,7 +26,9 @@ export default function RootLayout({
       >
         <Navbar/>
         <main className="flex-grow">
-          {children}
+          <PageTransition>
+            {children}
+          </PageTransition>
         </main>
       <Footer/>
       </body>

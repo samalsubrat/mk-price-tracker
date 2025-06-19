@@ -69,8 +69,8 @@ export default async function ProductPage({ params }: PageProps) {
   return (
     <MaxWidthWrapper className="py-6">
       {/* Header Section */}
-      <div className="mb-6">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 leading-tight break-words">
+      <div className="mb-6"> 
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 leading-tight break-words ">
           {group.base_name}
         </h1>
       </div>
@@ -105,7 +105,7 @@ export default async function ProductPage({ params }: PageProps) {
                   {/* Product Name */}
                   <TableCell className="w-[40%] sm:w-[45%] md:w-[50%] px-3 sm:px-4 py-4">
                     <div className="pr-2">
-                      <span className="text-xs sm:text-sm font-medium text-gray-900 leading-tight break-words word-break hyphens-auto">
+                      <span className="text-xs sm:text-sm font-medium text-gray-900 leading-tight break-words word-break hyphens-auto line-clamp-2 sm:line-clamp-1">
                         {product.name}
                       </span>
                     </div>
