@@ -51,7 +51,7 @@ export function CategoriesSection() {
         <section className="py-16 bg-white">
             <div className="container mx-auto px-4">
                 <div className="max-w-6xl mx-auto">
-                    <h2 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-purple-600 via-purple-400 to-purple-600 bg-clip-text text-transparent pb-8 text-center -tracking-wide">Categories</h2>
+                    <h2 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-purple-600 via-purple-400 to-purple-600 bg-clip-text text-transparent pb-8 text-center">Categories</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {categories.map((category) => {
                             const IconComponent = category.icon
