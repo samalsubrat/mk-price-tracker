@@ -90,11 +90,11 @@ export default function SearchPageContent() {
         <p className="text-lg text-gray-500 mb-6">No search query provided.</p>
       )}
       {loading ? (
-        <div className="text-center py-12 text-lg text-gray-500">Loading...</div>
+        <div className="text-center py-12 text-lg text-gray-500">....</div>
       ) : error ? (
         <div className="text-center py-12 text-red-500">{error}</div>
       ) : query && data.length === 0 ? (
-        <div className="text-center py-12 text-gray-500">No products found.</div>
+        <div className="text-center py-12 text-gray-500">...</div>
       ) : (
         <div className="rounded-md border overflow-x-auto">
           <Table className="w-full table-fixed">
